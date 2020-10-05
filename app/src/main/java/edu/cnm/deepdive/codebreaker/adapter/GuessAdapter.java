@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import edu.cnm.deepdive.codebreaker.R;
 import edu.cnm.deepdive.codebreaker.model.Code.Guess;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public class GuessAdapter extends ArrayAdapter<Guess> {
@@ -26,13 +25,11 @@ public class GuessAdapter extends ArrayAdapter<Guess> {
   private final Map<Character, Integer> colorMap;
   private final LayoutInflater inflater;
 
-  public GuessAdapter(@NonNull Context context) {
+  public GuessAdapter(@NonNull Context context,
+      Map<Character, Integer> colorMap) {
     super(context, R.layout.item_guess, new ArrayList<Guess>());
     inflater = LayoutInflater.from(context);
-    colorMap = new HashMap<>();
-    for (int i = 0; i < colorCharacters.length; i++) {
-      colorMap.put(colorCharacters[i], colorValues[i]);
-    }
+    this.colorMap = colorMap;
   }
 
   @NonNull
