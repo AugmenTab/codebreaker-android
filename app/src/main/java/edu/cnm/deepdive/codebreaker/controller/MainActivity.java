@@ -7,21 +7,15 @@ import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import edu.cnm.deepdive.codebreaker.R;
 import edu.cnm.deepdive.codebreaker.adapter.GuessAdapter;
-import edu.cnm.deepdive.codebreaker.model.Code.Guess;
-import edu.cnm.deepdive.codebreaker.model.Game;
+import edu.cnm.deepdive.codebreaker.databinding.ActivityMainBinding;
 import edu.cnm.deepdive.codebreaker.viewmodel.MainViewModel;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,17 +28,16 @@ public class MainActivity extends AppCompatActivity implements InputFilter {
   private static final Map<Character, Integer> colorMap =
       buildColorMap(MainViewModel.POOL.toCharArray(), colorValues);
 
-  private ListView guessList;
-  private EditText guess;
   private MainViewModel viewModel;
   private GuessAdapter adapter;
   private int codeLength;
-  private Button submit;
+  private ActivityMainBinding binding;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    binding = ActivityMainBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
     setupViews();
     setupViewModel();
   }
@@ -87,12 +80,12 @@ public class MainActivity extends AppCompatActivity implements InputFilter {
           modifiedSource.substring(0, modifiedSource.length() - (builder.length() - codeLength));
     }
     int newLength = dest.length() - (destEnd - destStart) + modifiedSource.length();
-    submit.setEnabled(newLength == codeLength);
+    binding.submit.setEnabled(newLength == codeLength);
     return modifiedSource;
   }
 
   private void recordGuess() {
-    viewModel.guess(guess.getText().toString().trim().toUpperCase());
+    viewModel.guess(binding.guess.getText().toString().trim().toUpperCase());
   }
 
   private void startGame() {
@@ -117,13 +110,13 @@ public class MainActivity extends AppCompatActivity implements InputFilter {
     viewModel.getGame().observe(this, (game) -> {
       adapter.clear();
       adapter.addAll(game.getGuesses());
-      guessList.setAdapter(adapter);
-      guessList.setSelection(adapter.getCount() - 1);
+      binding.guessList.setAdapter(adapter);
+      binding.guessList.setSelection(adapter.getCount() - 1);
       codeLength = game.getLength();
-      guess.setText("");
+      binding.guess.setText("");
     });
     viewModel.getSolved().observe(this, (solved) ->
-        findViewById(R.id.guess_controls).setVisibility(solved ? View.INVISIBLE : View.VISIBLE));
+        binding.guessControls.setVisibility(solved ? View.INVISIBLE : View.VISIBLE));
     viewModel.getThrowable().observe(this, (throwable) -> {
       if (throwable != null) {
         Toast.makeText(this, throwable.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -132,11 +125,8 @@ public class MainActivity extends AppCompatActivity implements InputFilter {
   }
 
   private void setupViews() {
-    guessList = findViewById(R.id.guess_list);
-    guess = findViewById(R.id.guess);
-    guess.setFilters(new InputFilter[]{this});
-    submit = findViewById(R.id.submit);
-    submit.setOnClickListener((view) -> recordGuess());
+    binding.guess.setFilters(new InputFilter[]{this});
+    binding.submit.setOnClickListener((view) -> recordGuess());
   }
 
 }
