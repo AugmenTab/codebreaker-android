@@ -1,5 +1,6 @@
 package edu.cnm.deepdive.codebreaker.controller;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.InputFilter;
@@ -27,11 +28,9 @@ public class GameFragment extends Fragment implements InputFilter {
 
   private static final String INVALID_CHAR_PATTERN = String.format("[^%s]", MainViewModel.POOL);
 
-  private static final int[] colorValues =
-      {Color.RED, 0xffffa500, Color.YELLOW, Color.GREEN, Color.BLUE, 0xff4b0082, 0xffee82ee};
-  private static final Map<Character, Integer> colorMap =
-      buildColorMap(MainViewModel.POOL.toCharArray(), colorValues);
-
+  private int[] colorValues;
+  private Map<Character, Integer> colorValueMap;
+  private Map<Character, String> colorLabelMap;
   private MainViewModel viewModel;
   private GuessAdapter adapter;
   private int codeLength;
@@ -50,6 +49,12 @@ public class GameFragment extends Fragment implements InputFilter {
       @Nullable Bundle savedInstanceState) {
     binding = FragmentGameBinding.inflate(getLayoutInflater());
     setupViews();
+    char[] colorCodes = getString(R.string.color_codes).toCharArray();
+    Resources resources = getContext().getResources();
+    int[] colorValues = resources.getIntArray(R.array.color_values);
+    String[] colorLabels = resources.getStringArray(R.array.color_labels);
+    colorValueMap = buildColorMap(colorCodes, colorValues);
+    colorLabelMap = buildLabelMap(colorCodes, colorLabels);
     return binding.getRoot();
   }
 
@@ -96,6 +101,29 @@ public class GameFragment extends Fragment implements InputFilter {
     return modifiedSource;
   }
 
+  private void setupViews() {
+    binding.guess.setFilters(new InputFilter[]{this});
+    binding.submit.setOnClickListener((view) -> recordGuess());
+  }
+
+  private void setupViewModel() {
+    FragmentActivity activity = getActivity();
+    //noinspection ConstantConditions
+    adapter = new GuessAdapter(activity, colorValueMap, colorLabelMap);
+    viewModel = new ViewModelProvider(activity).get(MainViewModel.class);
+    LifecycleOwner lifecycleOwner = getViewLifecycleOwner();
+    viewModel.getGame().observe(lifecycleOwner, (game) -> {
+      adapter.clear();
+      adapter.addAll(game.getGuesses());
+      binding.guessList.setAdapter(adapter);
+      binding.guessList.setSelection(adapter.getCount() - 1);
+      codeLength = game.getLength();
+      binding.guess.setText("");
+    });
+    viewModel.getSolved().observe(lifecycleOwner, (solved) ->
+        binding.guessControls.setVisibility(solved ? View.INVISIBLE : View.VISIBLE));
+  }
+
   private void recordGuess() {
     viewModel.guess(binding.guess.getText().toString().trim().toUpperCase());
   }
@@ -116,27 +144,12 @@ public class GameFragment extends Fragment implements InputFilter {
     return colorMap;
   }
 
-  private void setupViewModel() {
-    FragmentActivity activity = getActivity();
-    //noinspection ConstantConditions
-    adapter = new GuessAdapter(activity, colorMap);
-    viewModel = new ViewModelProvider(activity).get(MainViewModel.class);
-    LifecycleOwner lifecycleOwner = getViewLifecycleOwner();
-    viewModel.getGame().observe(lifecycleOwner, (game) -> {
-      adapter.clear();
-      adapter.addAll(game.getGuesses());
-      binding.guessList.setAdapter(adapter);
-      binding.guessList.setSelection(adapter.getCount() - 1);
-      codeLength = game.getLength();
-      binding.guess.setText("");
-    });
-    viewModel.getSolved().observe(lifecycleOwner, (solved) ->
-        binding.guessControls.setVisibility(solved ? View.INVISIBLE : View.VISIBLE));
-  }
-
-  private void setupViews() {
-    binding.guess.setFilters(new InputFilter[]{this});
-    binding.submit.setOnClickListener((view) -> recordGuess());
+  private static Map<Character, String> buildLabelMap(char[] chars, String[] labels) {
+    Map<Character, String> labelMap = new HashMap<>();
+    for (int i = 0; i < chars.length; i++) {
+      labelMap.put(chars[i], labels[i]);
+    }
+    return labelMap;
   }
 
 }
