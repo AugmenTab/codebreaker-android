@@ -2,8 +2,6 @@ package edu.cnm.deepdive.codebreaker.controller;
 
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.text.InputFilter;
-import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
